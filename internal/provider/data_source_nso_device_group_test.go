@@ -34,6 +34,10 @@ func TestAccDataSourceNsoDeviceGroup(t *testing.T) {
 				Config: testAccDataSourceNsoDeviceGroupConfig,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("data.nso_device_group.test", "device_names.0", "ce0"),
+					resource.TestCheckResourceAttr("data.nso_device_group.test", "location_name", "Building-1"),
+					resource.TestCheckResourceAttr("data.nso_device_group.test", "location_latitude", "37.338207"),
+					resource.TestCheckResourceAttr("data.nso_device_group.test", "location_longitude", "-121.886330"),
+					resource.TestCheckResourceAttr("data.nso_device_group.test", "location_altitude", "50"),
 				),
 			},
 		},
@@ -45,6 +49,10 @@ const testAccDataSourceNsoDeviceGroupConfig = `
 resource "nso_device_group" "test" {
 	name = "test-group1"
 	device_names = ["ce0"]
+	location_name = "Building-1"
+	location_latitude = "37.338207"
+	location_longitude = "-121.886330"
+	location_altitude = 50
 }
 
 data "nso_device_group" "test" {

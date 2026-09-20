@@ -278,6 +278,7 @@ func (p *NsoProvider) Resources(ctx context.Context) []func() resource.Resource 
 		NewDeviceConfigResource,
 		NewDeviceResource,
 		NewDeviceGroupResource,
+		NewGlobalSettingsResource,
 	}
 }
 
@@ -287,6 +288,7 @@ func (p *NsoProvider) DataSources(ctx context.Context) []func() datasource.DataS
 		NewDeviceConfigDataSource,
 		NewDeviceDataSource,
 		NewDeviceGroupDataSource,
+		NewGlobalSettingsDataSource,
 	}
 }
 

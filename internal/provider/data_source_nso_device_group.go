@@ -77,6 +77,22 @@ func (d *DeviceGroupDataSource) Schema(ctx context.Context, req datasource.Schem
 				ElementType:         types.StringType,
 				Computed:            true,
 			},
+			"location_name": schema.StringAttribute{
+				MarkdownDescription: "An arbitrary name of the location.",
+				Computed:            true,
+			},
+			"location_latitude": schema.StringAttribute{
+				MarkdownDescription: "The latitude according to WGS-84, in decimal degrees.",
+				Computed:            true,
+			},
+			"location_longitude": schema.StringAttribute{
+				MarkdownDescription: "The longitude according to WGS-84, in decimal degrees.",
+				Computed:            true,
+			},
+			"location_altitude": schema.Int64Attribute{
+				MarkdownDescription: "The altitude according to WGS-84, in meters.",
+				Computed:            true,
+			},
 		},
 	}
 }

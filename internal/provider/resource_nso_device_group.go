@@ -80,6 +80,22 @@ func (r *DeviceGroupResource) Schema(ctx context.Context, req resource.SchemaReq
 				ElementType:         types.StringType,
 				Optional:            true,
 			},
+			"location_name": schema.StringAttribute{
+				MarkdownDescription: helpers.NewAttributeDescription("An arbitrary name of the location.").String,
+				Optional:            true,
+			},
+			"location_latitude": schema.StringAttribute{
+				MarkdownDescription: helpers.NewAttributeDescription("The latitude according to WGS-84, in decimal degrees.").String,
+				Optional:            true,
+			},
+			"location_longitude": schema.StringAttribute{
+				MarkdownDescription: helpers.NewAttributeDescription("The longitude according to WGS-84, in decimal degrees.").String,
+				Optional:            true,
+			},
+			"location_altitude": schema.Int64Attribute{
+				MarkdownDescription: helpers.NewAttributeDescription("The altitude according to WGS-84, in meters.").String,
+				Optional:            true,
+			},
 		},
 	}
 }

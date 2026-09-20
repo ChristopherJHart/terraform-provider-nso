@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"net/url"
 	"regexp"
+	"strconv"
 
 	"github.com/CiscoDevNet/terraform-provider-nso/internal/provider/helpers"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -32,19 +33,27 @@ import (
 )
 
 type DeviceGroup struct {
-	Instance     types.String `tfsdk:"instance"`
-	Id           types.String `tfsdk:"id"`
-	Name         types.String `tfsdk:"name"`
-	DeviceNames  types.List   `tfsdk:"device_names"`
-	DeviceGroups types.List   `tfsdk:"device_groups"`
+	Instance          types.String `tfsdk:"instance"`
+	Id                types.String `tfsdk:"id"`
+	Name              types.String `tfsdk:"name"`
+	DeviceNames       types.List   `tfsdk:"device_names"`
+	DeviceGroups      types.List   `tfsdk:"device_groups"`
+	LocationName      types.String `tfsdk:"location_name"`
+	LocationLatitude  types.String `tfsdk:"location_latitude"`
+	LocationLongitude types.String `tfsdk:"location_longitude"`
+	LocationAltitude  types.Int64  `tfsdk:"location_altitude"`
 }
 
 type DeviceGroupData struct {
-	Instance     types.String `tfsdk:"instance"`
-	Id           types.String `tfsdk:"id"`
-	Name         types.String `tfsdk:"name"`
-	DeviceNames  types.List   `tfsdk:"device_names"`
-	DeviceGroups types.List   `tfsdk:"device_groups"`
+	Instance          types.String `tfsdk:"instance"`
+	Id                types.String `tfsdk:"id"`
+	Name              types.String `tfsdk:"name"`
+	DeviceNames       types.List   `tfsdk:"device_names"`
+	DeviceGroups      types.List   `tfsdk:"device_groups"`
+	LocationName      types.String `tfsdk:"location_name"`
+	LocationLatitude  types.String `tfsdk:"location_latitude"`
+	LocationLongitude types.String `tfsdk:"location_longitude"`
+	LocationAltitude  types.Int64  `tfsdk:"location_altitude"`
 }
 
 func (data DeviceGroup) getPath() string {
@@ -81,6 +90,18 @@ func (data DeviceGroup) toBody(ctx context.Context) string {
 		data.DeviceGroups.ElementsAs(ctx, &values, false)
 		body, _ = sjson.Set(body, helpers.LastElement(data.getPath())+"."+"device-group", values)
 	}
+	if !data.LocationName.IsNull() && !data.LocationName.IsUnknown() {
+		body, _ = sjson.Set(body, helpers.LastElement(data.getPath())+"."+"location.name", data.LocationName.ValueString())
+	}
+	if !data.LocationLatitude.IsNull() && !data.LocationLatitude.IsUnknown() {
+		body, _ = sjson.Set(body, helpers.LastElement(data.getPath())+"."+"location.latitude", data.LocationLatitude.ValueString())
+	}
+	if !data.LocationLongitude.IsNull() && !data.LocationLongitude.IsUnknown() {
+		body, _ = sjson.Set(body, helpers.LastElement(data.getPath())+"."+"location.longitude", data.LocationLongitude.ValueString())
+	}
+	if !data.LocationAltitude.IsNull() && !data.LocationAltitude.IsUnknown() {
+		body, _ = sjson.Set(body, helpers.LastElement(data.getPath())+"."+"location.altitude", strconv.FormatInt(data.LocationAltitude.ValueInt64(), 10))
+	}
 	return body
 }
 
@@ -104,6 +125,26 @@ func (data *DeviceGroup) updateFromBody(ctx context.Context, res gjson.Result) {
 	} else {
 		data.DeviceGroups = types.ListNull(types.StringType)
 	}
+	if value := res.Get(prefix + "location.name"); value.Exists() && !data.LocationName.IsNull() {
+		data.LocationName = types.StringValue(value.String())
+	} else {
+		data.LocationName = types.StringNull()
+	}
+	if value := res.Get(prefix + "location.latitude"); value.Exists() && !data.LocationLatitude.IsNull() {
+		data.LocationLatitude = types.StringValue(value.String())
+	} else {
+		data.LocationLatitude = types.StringNull()
+	}
+	if value := res.Get(prefix + "location.longitude"); value.Exists() && !data.LocationLongitude.IsNull() {
+		data.LocationLongitude = types.StringValue(value.String())
+	} else {
+		data.LocationLongitude = types.StringNull()
+	}
+	if value := res.Get(prefix + "location.altitude"); value.Exists() && !data.LocationAltitude.IsNull() {
+		data.LocationAltitude = types.Int64Value(value.Int())
+	} else {
+		data.LocationAltitude = types.Int64Null()
+	}
 }
 
 func (data *DeviceGroupData) fromBody(ctx context.Context, res gjson.Result) {
@@ -120,6 +161,18 @@ func (data *DeviceGroupData) fromBody(ctx context.Context, res gjson.Result) {
 		data.DeviceGroups = helpers.GetStringList(value.Array())
 	} else {
 		data.DeviceGroups = types.ListNull(types.StringType)
+	}
+	if value := res.Get(prefix + "location.name"); value.Exists() {
+		data.LocationName = types.StringValue(value.String())
+	}
+	if value := res.Get(prefix + "location.latitude"); value.Exists() {
+		data.LocationLatitude = types.StringValue(value.String())
+	}
+	if value := res.Get(prefix + "location.longitude"); value.Exists() {
+		data.LocationLongitude = types.StringValue(value.String())
+	}
+	if value := res.Get(prefix + "location.altitude"); value.Exists() {
+		data.LocationAltitude = types.Int64Value(value.Int())
 	}
 }
 
@@ -140,6 +193,18 @@ func (data *DeviceGroup) getDeletePaths(ctx context.Context) []string {
 	}
 	if !data.DeviceGroups.IsNull() {
 		deletePaths = append(deletePaths, fmt.Sprintf("%v/device-group", data.getPath()))
+	}
+	if !data.LocationName.IsNull() {
+		deletePaths = append(deletePaths, fmt.Sprintf("%v/location/name", data.getPath()))
+	}
+	if !data.LocationLatitude.IsNull() {
+		deletePaths = append(deletePaths, fmt.Sprintf("%v/location/latitude", data.getPath()))
+	}
+	if !data.LocationLongitude.IsNull() {
+		deletePaths = append(deletePaths, fmt.Sprintf("%v/location/longitude", data.getPath()))
+	}
+	if !data.LocationAltitude.IsNull() {
+		deletePaths = append(deletePaths, fmt.Sprintf("%v/location/altitude", data.getPath()))
 	}
 	return deletePaths
 }
