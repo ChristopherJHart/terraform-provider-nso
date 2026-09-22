@@ -39,9 +39,12 @@ var (
 // namespaceExceptions maps namespace prefixes to their full namespace URLs
 // for NSO and Tail-f YANG modules.
 var namespaceExceptions = map[string]string{
-	"tailf-ncs":         "http://tail-f.com/ns/ncs",
-	"tailf-common":      "http://tail-f.com/yang/common",
-	"tailf-ncs-devices": "http://tail-f.com/ns/ncs",
+	"tailf-ncs":            "http://tail-f.com/ns/ncs",
+	"tailf-common":         "http://tail-f.com/yang/common",
+	"tailf-ncs-devices":    "http://tail-f.com/ns/ncs",
+	"tailf-ned-cisco-ios":  "urn:ios",
+	"tailf-ned-cisco-nx":   "http://tail-f.com/ned/cisco-nx",
+	"tailf-ned-cisco-iosxr": "http://tail-f.com/ned/cisco-ios-xr",
 }
 
 // namespaceBaseURL is the fallback namespace URL pattern.
