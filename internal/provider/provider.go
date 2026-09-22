@@ -370,6 +370,11 @@ func (p *NsoProvider) Configure(ctx context.Context, req provider.ConfigureReque
 			resp.Diagnostics.AddError("Unable to create client", "Unable to create NETCONF client:\n\n"+err.Error())
 			return
 		}
+		if err := c.Open(); err != nil {
+			resp.Diagnostics.AddError("Unable to connect", "Unable to establish NETCONF connection:\n\n"+err.Error())
+			return
+		}
+		helpers.BuildNamespaceMap(c.Capabilities)
 		providerData.Instances[""] = &NsoInstanceData{
 			NetconfClient:   c,
 			AutoCommit:      autoCommit,

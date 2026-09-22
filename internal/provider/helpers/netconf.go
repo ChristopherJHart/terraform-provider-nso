@@ -36,21 +36,75 @@ var (
 	predicatePattern    = regexp.MustCompile(`\[([^\]]+)\]`)
 )
 
-// namespaceExceptions maps namespace prefixes to their full namespace URLs
-// for NSO and Tail-f YANG modules.
-var namespaceExceptions = map[string]string{
-	"tailf-ncs":            "http://tail-f.com/ns/ncs",
-	"tailf-common":         "http://tail-f.com/yang/common",
-	"tailf-ncs-devices":    "http://tail-f.com/ns/ncs",
-	"tailf-ned-cisco-ios":  "urn:ios",
-	"tailf-ned-cisco-nx":   "http://tail-f.com/ned/cisco-nx",
-	"tailf-ned-cisco-iosxr": "http://tail-f.com/ned/cisco-ios-xr",
+// coreNamespaces maps well-known NSO namespace prefixes to their URIs.
+// NED module namespaces are discovered dynamically from NETCONF capabilities.
+var coreNamespaces = map[string]string{
+	"tailf-ncs":         "http://tail-f.com/ns/ncs",
+	"tailf-common":      "http://tail-f.com/yang/common",
+	"tailf-ncs-devices": "http://tail-f.com/ns/ncs",
 }
 
 // namespaceBaseURL is the fallback namespace URL pattern.
-// NSO NED modules typically use urn:ios or vendor-specific namespaces,
-// so most real prefixes should be in namespaceExceptions.
 const namespaceBaseURL = "http://tail-f.com/ns/ncs/"
+
+// namespaceExceptions is the resolved namespace map, populated at startup
+// with coreNamespaces and augmented by BuildNamespaceMap from NETCONF capabilities.
+var namespaceExceptions = make(map[string]string)
+
+func init() {
+	for k, v := range coreNamespaces {
+		namespaceExceptions[k] = v
+	}
+}
+
+// BuildNamespaceMap parses NETCONF server capabilities to discover NED module
+// namespaces dynamically. NSO advertises NED meta modules with capabilities
+// like "urn:ios-meta?module=tailf-ned-cisco-ios-meta&revision=...". The config
+// module namespace is derived by stripping the "-meta" suffix from both the
+// namespace URI and the module name.
+func BuildNamespaceMap(capabilities []string) map[string]string {
+	discovered := make(map[string]string)
+
+	for _, cap := range capabilities {
+		moduleName := ""
+		namespace := cap
+
+		if idx := strings.Index(cap, "?"); idx >= 0 {
+			namespace = cap[:idx]
+			params := cap[idx+1:]
+			for _, param := range strings.Split(params, "&") {
+				if strings.HasPrefix(param, "module=") {
+					moduleName = strings.TrimPrefix(param, "module=")
+					break
+				}
+			}
+		}
+
+		if moduleName == "" {
+			continue
+		}
+
+		// NED meta modules: derive config module name and namespace
+		if strings.HasSuffix(moduleName, "-meta") {
+			configModule := strings.TrimSuffix(moduleName, "-meta")
+			configNamespace := strings.TrimSuffix(namespace, "-meta")
+			if strings.TrimSuffix(namespace, "/meta") != namespace {
+				configNamespace = strings.TrimSuffix(namespace, "/meta")
+			}
+			discovered[configModule] = configNamespace
+		}
+
+		// Also store the module itself
+		discovered[moduleName] = namespace
+	}
+
+	// Merge into the global map
+	for k, v := range discovered {
+		namespaceExceptions[k] = v
+	}
+
+	return discovered
+}
 
 // AcquireNetconfLock acquires the appropriate lock for a NETCONF operation.
 //
