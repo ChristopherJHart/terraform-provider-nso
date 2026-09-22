@@ -86,8 +86,17 @@ var nsoListKeyNames = map[string]string{
 // "/tailf-ncs:devices/device[name='test-device01']/config/interface".
 //
 // For list elements where the key name is not in the lookup table,
-// the key name defaults to "name".
+// the key name defaults to "name". To discover key names from resource
+// attributes, use ConvertRestconfPathToXPathWithAttrs instead.
 func ConvertRestconfPathToXPath(restconfPath string) string {
+	return ConvertRestconfPathToXPathWithAttrs(restconfPath, nil)
+}
+
+// ConvertRestconfPathToXPathWithAttrs converts a RESTCONF-style path to XPath,
+// using the provided attributes map to discover list key names. When a segment
+// has "element=value" and the value matches an attribute value, that attribute
+// name is used as the key leaf name. Falls back to nsoListKeyNames then "name".
+func ConvertRestconfPathToXPathWithAttrs(restconfPath string, attributes map[string]string) string {
 	restconfPath = strings.TrimPrefix(restconfPath, "/")
 	segments := strings.Split(restconfPath, "/")
 	var result []string
@@ -104,6 +113,19 @@ func ConvertRestconfPathToXPath(restconfPath string) string {
 			}
 
 			keyName, ok := nsoListKeyNames[cleanElement]
+			if !ok && attributes != nil {
+				// Try to discover key name from attributes by matching the value
+				values := strings.Split(keyValues, ",")
+				if len(values) == 1 {
+					for attrName, attrVal := range attributes {
+						if attrVal == values[0] && !strings.Contains(attrName, "/") {
+							keyName = attrName
+							ok = true
+							break
+						}
+					}
+				}
+			}
 			if !ok {
 				keyName = "name"
 			}

@@ -191,19 +191,24 @@ func (data *DeviceConfig) fromBody(ctx context.Context, res gjson.Result) {
 }
 
 func (data DeviceConfig) getXPath() string {
+	return data.getXPathWithAttrs(nil)
+}
+
+func (data DeviceConfig) getXPathWithAttrs(attributes map[string]string) string {
 	base := "/tailf-ncs:devices/device[name='" + data.Device.ValueString() + "']/config"
 	if data.Path.ValueString() != "" {
-		return base + "/" + helpers.ConvertRestconfPathToXPath(data.Path.ValueString())
+		return base + "/" + helpers.ConvertRestconfPathToXPathWithAttrs(data.Path.ValueString(), attributes)
 	}
 	return base
 }
 
 func (data DeviceConfig) toBodyXML(ctx context.Context) string {
 	body := netconf.Body{}
-	xpath := data.getXPath()
 
 	var attributes map[string]string
 	data.Attributes.ElementsAs(ctx, &attributes, false)
+
+	xpath := data.getXPathWithAttrs(attributes)
 
 	if len(attributes) == 0 && len(data.Lists) == 0 {
 		body = helpers.SetFromXPath(body, xpath, nil)
