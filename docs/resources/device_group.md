@@ -14,8 +14,12 @@ This resource can manage the Device Group configuration.
 
 ```terraform
 resource "nso_device_group" "example" {
-  name         = "test-group1"
-  device_names = ["tf-acc-dg-device"]
+  name               = "test-group1"
+  device_names       = ["tf-acc-dg-device"]
+  location_name      = "Building-1"
+  location_latitude  = "37.338207"
+  location_longitude = "-121.88633"
+  location_altitude  = 50
 }
 ```
 
@@ -31,6 +35,10 @@ resource "nso_device_group" "example" {
 - `device_groups` (List of String) A list of device groups.
 - `device_names` (List of String) A list of device names.
 - `instance` (String) An instance name from the provider configuration.
+- `location_altitude` (Number) The altitude according to WGS-84, in meters.
+- `location_latitude` (String) The latitude according to WGS-84, in decimal degrees.
+- `location_longitude` (String) The longitude according to WGS-84, in decimal degrees.
+- `location_name` (String) An arbitrary name of the location.
 
 ### Read-Only
 

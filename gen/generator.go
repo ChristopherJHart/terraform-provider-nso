@@ -125,6 +125,13 @@ type YamlConfigAttribute struct {
 	Optional        bool                  `yaml:"optional"`
 	WriteOnly       bool                  `yaml:"write_only"`
 	ExcludeTest     bool                  `yaml:"exclude_test"`
+	// tf_names of attributes in other cases of the same YANG choice. NSO rejects an edit
+	// that touches two cases at once, even if one is only a remove, so a choice member is
+	// removed only when it is set and no other case is being set.
+	ExclusiveWith []string `yaml:"exclusive_with"`
+	// A decimal64 modelled as String: NSO returns the canonical form (no trailing
+	// zeros), so a read keeps the configured value when it is numerically equal.
+	Decimal bool `yaml:"decimal"`
 	ExcludeExample  bool                  `yaml:"exclude_example"`
 	Description     string                `yaml:"description"`
 	Example         string                `yaml:"example"`

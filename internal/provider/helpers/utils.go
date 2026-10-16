@@ -18,6 +18,8 @@
 package helpers
 
 import (
+	"math/big"
+
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/netascode/xmldot"
@@ -67,4 +69,24 @@ func RemoveEmptyStrings(s []string) []string {
 		}
 	}
 	return r
+}
+
+// Configured reports whether a plan value puts something on the device: set and
+// known, and for a bool (an empty YANG leaf) true.
+func Configured(v attr.Value) bool {
+	if v.IsNull() || v.IsUnknown() {
+		return false
+	}
+	if b, ok := v.(types.Bool); ok {
+		return b.ValueBool()
+	}
+	return true
+}
+
+// DecimalEqual reports whether two decimal strings have the same value, such as
+// a configured "-121.886330" and NSO's canonical "-121.88633".
+func DecimalEqual(a, b string) bool {
+	x, okX := new(big.Rat).SetString(a)
+	y, okY := new(big.Rat).SetString(b)
+	return okX && okY && x.Cmp(y) == 0
 }

@@ -27,6 +27,32 @@ attributes:
     description: A list of device groups.
     exclude_test: true
     example: group1
+  - yang_name: location/name
+    xpath: location/name
+    tf_name: location_name
+    type: String
+    description: An arbitrary name of the location.
+    example: Building-1
+  - yang_name: location/latitude
+    xpath: location/latitude
+    tf_name: location_latitude
+    type: String
+    decimal: true
+    description: The latitude according to WGS-84, in decimal degrees.
+    example: "37.338207"
+  - yang_name: location/longitude
+    xpath: location/longitude
+    tf_name: location_longitude
+    type: String
+    decimal: true
+    description: The longitude according to WGS-84, in decimal degrees.
+    example: "-121.88633"
+  - yang_name: location/altitude
+    xpath: location/altitude
+    tf_name: location_altitude
+    type: Int64
+    description: The altitude according to WGS-84, in meters.
+    example: 50
 test_prerequisites:
   - path: /tailf-ncs:devices/device[name='tf-acc-dg-device']
     attributes:

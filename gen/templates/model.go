@@ -152,8 +152,10 @@ func (data {{camelCase .Name}}) addToBodyXML(ctx context.Context, body netconf.B
 		{{- else if and (eq .Type "Bool") (ne .TypeYangBool "boolean")}}
 		if data.{{toGoName .TfName}}.ValueBool() {
 			body = helpers.SetFromXPath(body, data.getXPath() + "/{{.XPath}}", "")
+		{{- if not .ExclusiveWith}}
 		} else {
 			body = helpers.RemoveFromXPath(body, data.getXPath() + "/{{.XPath}}")
+		{{- end}}
 		}
 		{{- else if and (eq .Type "Bool") (eq .TypeYangBool "boolean")}}
 		body = helpers.SetFromXPath(body, data.getXPath() + "/{{.XPath}}", data.{{toGoName .TfName}}.ValueBool())
@@ -329,7 +331,13 @@ func (data *{{camelCase .Name}}) updateFromBodyXML(ctx context.Context, res xmld
 	}
 	{{- else if eq .Type "String"}}
 	if value := helpers.GetFromXPath(res, "data" + data.getXPath() + "/{{.XPath}}"); value.Exists() && !data.{{toGoName .TfName}}.IsNull() {
+		{{- if .Decimal}}
+		if !helpers.DecimalEqual(data.{{toGoName .TfName}}.ValueString(), value.String()) {
+			data.{{toGoName .TfName}} = types.StringValue(value.String())
+		}
+		{{- else}}
 		data.{{toGoName .TfName}} = types.StringValue(value.String())
+		{{- end}}
 	} else {
 		data.{{toGoName .TfName}} = types.StringNull()
 	}
@@ -845,9 +853,17 @@ func (data *{{camelCase .Name}}) addDeletedItemsXML(ctx context.Context, state {
 		}
 	}
 	{{- else if and (not .Reference) (not .Id) (ne .Type "List") (not .NoDelete)}}
-	if !state.{{toGoName .TfName}}.IsNull() && data.{{toGoName .TfName}}.IsNull() {
+	{{- if and .ExclusiveWith (eq .Type "Bool") (ne .TypeYangBool "boolean")}}
+	// A YANG choice member: removed only when it is set, so one edit never removes from two
+	// cases (NSO rejects that), and not when another case is being set (that replaces it).
+	if state.{{toGoName .TfName}}.ValueBool() && !data.{{toGoName .TfName}}.ValueBool(){{range .ExclusiveWith}} && !helpers.Configured(data.{{toGoName .}}){{end}} {
 		b = helpers.RemoveFromXPath(b, state.getXPath()+"/{{getDeletePath .}}")
 	}
+	{{- else}}
+	if !state.{{toGoName .TfName}}.IsNull() && data.{{toGoName .TfName}}.IsNull(){{range .ExclusiveWith}} && !helpers.Configured(data.{{toGoName .}}){{end}} {
+		b = helpers.RemoveFromXPath(b, state.getXPath()+"/{{getDeletePath .}}")
+	}
+	{{- end}}
 	{{- else if eq .Type "List"}}
 	{{- $xpath := .XPath}}
 	for i := range state.{{toGoName .TfName}} {
@@ -1022,6 +1038,11 @@ func (data *{{camelCase .Name}}) addDeletePathsXML(ctx context.Context, body str
 		for _, v := range values {
 			b = helpers.RemoveFromXPath(b, fmt.Sprintf(data.getXPath()+"/{{.XPath}}[.=%v]", v))
 		}
+	}
+	{{- else if and (not .Reference) (not .Id) (ne .Type "List") (not .NoDelete) .ExclusiveWith}}
+	// A YANG choice member: only the case that is set is deleted (NSO rejects touching two).
+	if helpers.Configured(data.{{toGoName .TfName}}) {
+		b = helpers.RemoveFromXPath(b, data.getXPath()+"/{{getDeletePath .}}")
 	}
 	{{- else if and (not .Reference) (not .Id) (ne .Type "List") (not .NoDelete)}}
 	if !data.{{toGoName .TfName}}.IsNull() {

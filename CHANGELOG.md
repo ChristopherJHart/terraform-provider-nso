@@ -7,6 +7,8 @@
 - BREAKING CHANGE: Resource IDs are now XPaths and import identifiers changed; existing resources must be removed from state and re-imported
 - Add provider attributes `attempt_timeout`, `total_timeout`, `lock_release_timeout`, `reuse_connection` and `auto_commit`
 - Discover NED module XML namespaces from NETCONF capabilities
+- Add `nso_global_settings` resource and data source
+- Add `location_name`, `location_latitude`, `location_longitude` and `location_altitude` attributes to `nso_device_group` resource and data source
 
 ## 0.2.1
 

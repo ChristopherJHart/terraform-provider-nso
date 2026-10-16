@@ -505,6 +505,13 @@ func (r *{{camelCase .Name}}Resource) Delete(ctx context.Context, req resource.D
 func (r *{{camelCase .Name}}Resource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	idParts := strings.Split(req.ID, ",")
 	idParts = helpers.RemoveEmptyStrings(idParts)
+	{{- if not (importAttributes .)}}
+	// No key to import by, so the ID may also be the resource's own path (what
+	// terraform-plugin-testing passes by default). Instance names never contain "/".
+	if len(idParts) == 1 && strings.HasPrefix(idParts[0], "/") {
+		idParts = nil
+	}
+	{{- end}}
 
 	if len(idParts) != {{len (importAttributes .)}} && len(idParts) != {{add (len (importAttributes .)) 1}} {
 		expectedIdentifier := "Expected import identifier with format: '{{range $i, $e := (importAttributes .)}}{{if $i}},{{end}}<{{.TfName}}>{{end}}'"
@@ -524,10 +531,14 @@ func (r *{{camelCase .Name}}Resource) ImportState(ctx context.Context, req resou
 	}
 
 	var state {{camelCase .Name}}
+	{{- if importAttributes .}}
 	diags := resp.State.Get(ctx, &state)
 	if resp.Diagnostics.Append(diags...); resp.Diagnostics.HasError() {
 		return
 	}
+	{{- else}}
+	// Without a key the path is fixed, and the import state may still be empty.
+	{{- end}}
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), state.getPath())...)
 
 	helpers.SetFlagImporting(ctx, true, resp.Private, &resp.Diagnostics)

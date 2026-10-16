@@ -22,6 +22,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/CiscoDevNet/terraform-provider-nso/internal/provider/helpers"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -31,19 +32,27 @@ import (
 )
 
 type DeviceGroup struct {
-	Instance     types.String `tfsdk:"instance"`
-	Id           types.String `tfsdk:"id"`
-	Name         types.String `tfsdk:"name"`
-	DeviceNames  types.List   `tfsdk:"device_names"`
-	DeviceGroups types.List   `tfsdk:"device_groups"`
+	Instance          types.String `tfsdk:"instance"`
+	Id                types.String `tfsdk:"id"`
+	Name              types.String `tfsdk:"name"`
+	DeviceNames       types.List   `tfsdk:"device_names"`
+	DeviceGroups      types.List   `tfsdk:"device_groups"`
+	LocationName      types.String `tfsdk:"location_name"`
+	LocationLatitude  types.String `tfsdk:"location_latitude"`
+	LocationLongitude types.String `tfsdk:"location_longitude"`
+	LocationAltitude  types.Int64  `tfsdk:"location_altitude"`
 }
 
 type DeviceGroupData struct {
-	Instance     types.String `tfsdk:"instance"`
-	Id           types.String `tfsdk:"id"`
-	Name         types.String `tfsdk:"name"`
-	DeviceNames  types.List   `tfsdk:"device_names"`
-	DeviceGroups types.List   `tfsdk:"device_groups"`
+	Instance          types.String `tfsdk:"instance"`
+	Id                types.String `tfsdk:"id"`
+	Name              types.String `tfsdk:"name"`
+	DeviceNames       types.List   `tfsdk:"device_names"`
+	DeviceGroups      types.List   `tfsdk:"device_groups"`
+	LocationName      types.String `tfsdk:"location_name"`
+	LocationLatitude  types.String `tfsdk:"location_latitude"`
+	LocationLongitude types.String `tfsdk:"location_longitude"`
+	LocationAltitude  types.Int64  `tfsdk:"location_altitude"`
 }
 
 // getPath returns the XPath of the object, which is also used as the resource id.
@@ -96,6 +105,18 @@ func (data DeviceGroup) addToBodyXML(ctx context.Context, body netconf.Body) net
 			body = helpers.AppendFromXPath(body, data.getXPath()+"/device-group", v)
 		}
 	}
+	if !data.LocationName.IsNull() && !data.LocationName.IsUnknown() {
+		body = helpers.SetFromXPath(body, data.getXPath()+"/location/name", data.LocationName.ValueString())
+	}
+	if !data.LocationLatitude.IsNull() && !data.LocationLatitude.IsUnknown() {
+		body = helpers.SetFromXPath(body, data.getXPath()+"/location/latitude", data.LocationLatitude.ValueString())
+	}
+	if !data.LocationLongitude.IsNull() && !data.LocationLongitude.IsUnknown() {
+		body = helpers.SetFromXPath(body, data.getXPath()+"/location/longitude", data.LocationLongitude.ValueString())
+	}
+	if !data.LocationAltitude.IsNull() && !data.LocationAltitude.IsUnknown() {
+		body = helpers.SetFromXPath(body, data.getXPath()+"/location/altitude", strconv.FormatInt(data.LocationAltitude.ValueInt64(), 10))
+	}
 	return body
 }
 
@@ -115,6 +136,30 @@ func (data *DeviceGroup) updateFromBodyXML(ctx context.Context, res xmldot.Resul
 	} else {
 		data.DeviceGroups = types.ListNull(types.StringType)
 	}
+	if value := helpers.GetFromXPath(res, "data"+data.getXPath()+"/location/name"); value.Exists() && !data.LocationName.IsNull() {
+		data.LocationName = types.StringValue(value.String())
+	} else {
+		data.LocationName = types.StringNull()
+	}
+	if value := helpers.GetFromXPath(res, "data"+data.getXPath()+"/location/latitude"); value.Exists() && !data.LocationLatitude.IsNull() {
+		if !helpers.DecimalEqual(data.LocationLatitude.ValueString(), value.String()) {
+			data.LocationLatitude = types.StringValue(value.String())
+		}
+	} else {
+		data.LocationLatitude = types.StringNull()
+	}
+	if value := helpers.GetFromXPath(res, "data"+data.getXPath()+"/location/longitude"); value.Exists() && !data.LocationLongitude.IsNull() {
+		if !helpers.DecimalEqual(data.LocationLongitude.ValueString(), value.String()) {
+			data.LocationLongitude = types.StringValue(value.String())
+		}
+	} else {
+		data.LocationLongitude = types.StringNull()
+	}
+	if value := helpers.GetFromXPath(res, "data"+data.getXPath()+"/location/altitude"); value.Exists() && !data.LocationAltitude.IsNull() {
+		data.LocationAltitude = types.Int64Value(value.Int())
+	} else {
+		data.LocationAltitude = types.Int64Null()
+	}
 }
 
 func (data *DeviceGroup) fromBodyXML(ctx context.Context, res xmldot.Result) {
@@ -127,6 +172,18 @@ func (data *DeviceGroup) fromBodyXML(ctx context.Context, res xmldot.Result) {
 		data.DeviceGroups = helpers.GetStringListXML(value.Array())
 	} else {
 		data.DeviceGroups = types.ListNull(types.StringType)
+	}
+	if value := helpers.GetFromXPath(res, "data"+data.getXPath()+"/location/name"); value.Exists() {
+		data.LocationName = types.StringValue(value.String())
+	}
+	if value := helpers.GetFromXPath(res, "data"+data.getXPath()+"/location/latitude"); value.Exists() {
+		data.LocationLatitude = types.StringValue(value.String())
+	}
+	if value := helpers.GetFromXPath(res, "data"+data.getXPath()+"/location/longitude"); value.Exists() {
+		data.LocationLongitude = types.StringValue(value.String())
+	}
+	if value := helpers.GetFromXPath(res, "data"+data.getXPath()+"/location/altitude"); value.Exists() {
+		data.LocationAltitude = types.Int64Value(value.Int())
 	}
 }
 
@@ -141,10 +198,34 @@ func (data *DeviceGroupData) fromBodyXML(ctx context.Context, res xmldot.Result)
 	} else {
 		data.DeviceGroups = types.ListNull(types.StringType)
 	}
+	if value := helpers.GetFromXPath(res, "data"+data.getXPath()+"/location/name"); value.Exists() {
+		data.LocationName = types.StringValue(value.String())
+	}
+	if value := helpers.GetFromXPath(res, "data"+data.getXPath()+"/location/latitude"); value.Exists() {
+		data.LocationLatitude = types.StringValue(value.String())
+	}
+	if value := helpers.GetFromXPath(res, "data"+data.getXPath()+"/location/longitude"); value.Exists() {
+		data.LocationLongitude = types.StringValue(value.String())
+	}
+	if value := helpers.GetFromXPath(res, "data"+data.getXPath()+"/location/altitude"); value.Exists() {
+		data.LocationAltitude = types.Int64Value(value.Int())
+	}
 }
 
 func (data *DeviceGroup) addDeletedItemsXML(ctx context.Context, state DeviceGroup, body string) string {
 	b := netconf.NewBody(body)
+	if !state.LocationAltitude.IsNull() && data.LocationAltitude.IsNull() {
+		b = helpers.RemoveFromXPath(b, state.getXPath()+"/location/altitude")
+	}
+	if !state.LocationLongitude.IsNull() && data.LocationLongitude.IsNull() {
+		b = helpers.RemoveFromXPath(b, state.getXPath()+"/location/longitude")
+	}
+	if !state.LocationLatitude.IsNull() && data.LocationLatitude.IsNull() {
+		b = helpers.RemoveFromXPath(b, state.getXPath()+"/location/latitude")
+	}
+	if !state.LocationName.IsNull() && data.LocationName.IsNull() {
+		b = helpers.RemoveFromXPath(b, state.getXPath()+"/location/name")
+	}
 	if !state.DeviceGroups.IsNull() {
 		if data.DeviceGroups.IsNull() {
 			var values []string
@@ -202,6 +283,18 @@ func (data *DeviceGroup) addDeletedItemsXML(ctx context.Context, state DeviceGro
 
 func (data *DeviceGroup) addDeletePathsXML(ctx context.Context, body string) string {
 	b := netconf.NewBody(body)
+	if !data.LocationAltitude.IsNull() {
+		b = helpers.RemoveFromXPath(b, data.getXPath()+"/location/altitude")
+	}
+	if !data.LocationLongitude.IsNull() {
+		b = helpers.RemoveFromXPath(b, data.getXPath()+"/location/longitude")
+	}
+	if !data.LocationLatitude.IsNull() {
+		b = helpers.RemoveFromXPath(b, data.getXPath()+"/location/latitude")
+	}
+	if !data.LocationName.IsNull() {
+		b = helpers.RemoveFromXPath(b, data.getXPath()+"/location/name")
+	}
 	if !data.DeviceGroups.IsNull() {
 		var values []string
 		data.DeviceGroups.ElementsAs(ctx, &values, false)
