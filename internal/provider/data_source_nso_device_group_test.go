@@ -34,6 +34,10 @@ func TestAccDataSourceNsoDeviceGroup(t *testing.T) {
 				Config: testAccDataSourceNsoDeviceGroupPrerequisitesConfig + testAccDataSourceNsoDeviceGroupConfig,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("data.nso_device_group.test", "device_names.0", "tf-acc-dg-device"),
+					resource.TestCheckResourceAttr("data.nso_device_group.test", "location_name", "Building-1"),
+					resource.TestCheckResourceAttr("data.nso_device_group.test", "location_latitude", "37.338207"),
+					resource.TestCheckResourceAttr("data.nso_device_group.test", "location_longitude", "-121.886330"),
+					resource.TestCheckResourceAttr("data.nso_device_group.test", "location_altitude", "50"),
 				),
 			},
 		},
@@ -59,6 +63,10 @@ const testAccDataSourceNsoDeviceGroupConfig = `
 resource "nso_device_group" "test" {
 	name = "test-group1"
 	device_names = ["tf-acc-dg-device"]
+	location_name = "Building-1"
+	location_latitude = "37.338207"
+	location_longitude = "-121.886330"
+	location_altitude = 50
 	depends_on = [nso_netconf.PreReq0, ]
 }
 
